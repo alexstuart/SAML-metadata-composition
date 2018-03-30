@@ -3,24 +3,51 @@
 # Takes an EntityDescriptor or EntititesDescriptor and determines the
 # composition of it
 #
+use XML::LibXML;
+use Getopt::Long;
+
+sub usage {
+        my $message = shift(@_);
+        if ($message) { print "\n$message\n"; }
+
+        print <<EOF;
+
+	usage: $0 [-h] [ -reg <regAuth> ]
+
+	<regAuth> - only output entities from this registrationAuthority
+
+	-h - print this help text and exit
+
+	Given an EntityDescriptor or EntitiesDescriptor, display the elements
+	that are in this file. Outputs number of occurences.
+
+EOF
+}
+
+my $help;
+my $registrationAuthority;
+GetOptions (	"help" => \$help,
+		"reg=s" => \$registrationAuthority
+	   );
+
+if ( $help ) {
+	usage;
+	exit 0;
+}
+
 if ( ! $ARGV[0] ) {
-	print "Must provide a file to check\n";
+	usage "ERROR: Must provide a file to check";
 	exit 1;
 }
 
 $xmlfile = $ARGV[0];
 
 if ( ! -r $xmlfile ) {
-	print "Must provide a readable XML file, not $xmlfile\n";
+	usage "ERROR: Must provide a readable XML file, not $xmlfile";
 	exit 1;
 }
 
-if ( $ARGV[1] ) {
-	$registrationAuthority = $ARGV[1];
-	print "Only looking for registrationAuthority $registrationAuthority\n";
-}
 my @nodes;
-use XML::LibXML;
 my $dom = XML::LibXML->load_xml( location => $xmlfile);
 my $xpc = XML::LibXML::XPathContext->new( $dom );
 $xpc->registerNs( 'md', 'urn:oasis:names:tc:SAML:2.0:metadata' );
