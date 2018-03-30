@@ -42,11 +42,13 @@ foreach (sort keys %elements) {
 
 sub processNode {
 	my $node = shift;
+	my $nodeNS;
 
 	if ( $node->nodeType != XML_ELEMENT_NODE) { return; }
-	#print $node->nodeName . "\n";
-        ++$elements{ $node->nodeName };
-	#print $elements{ $node->nodeName } . "\n";
+	$nodeNS = '{' . $node->namespaceURI . '}' . $node->localname;
+	#print "$nodeNS\n";
+        ++$elements{ $nodeNS };
+	#print $node->nodePath() . "\n";
 	if ( ! $node->hasChildNodes ) { return; }
 	foreach $child ($node->childNodes) {
 		if ( $child->nodeType != XML_ELEMENT_NODE) { next; }
