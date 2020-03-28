@@ -28,15 +28,19 @@ sub usage {
 
         print <<EOF;
 
-	usage: $0 [-h] [ -reg <regAuth> ] [-l] <file>
-
-	-h - print this help text and exit
-
-	<regAuth> - only output entities from this registrationAuthority
-	-l        - list the registrationAuthority strings in this file
+	usage: $0 [-h] [ -reg <regAuth> ] [-l] [-s] <file>
 
 	Given an EntityDescriptor or EntitiesDescriptor, display the elements
 	that are in this file. Outputs number of occurences.
+
+	-h - print this help text and exit
+
+	-reg <regAuth> - only output entities from this registrationAuthority
+	-l             - list the registrationAuthority strings in this file
+	-s             - output total sizes of text content of each element
+	               (It's the sum of \$node->textContent so will underestimate
+                       the size of each element; and the sum of sizes may be more
+                       than the total size of the metadata because of double-counting.)
 
 EOF
 }
@@ -44,9 +48,11 @@ EOF
 my $help;
 my $registrationAuthority;
 my $list;
-GetOptions (	"help" => \$help,
+my $size;
+GetOptions (	"sizes" => \$size,
 		"reg=s" => \$registrationAuthority,
-		"list" => \$list
+		"list" => \$list,
+		"help" => \$help
 	   );
 
 if ( $help ) {
@@ -93,11 +99,18 @@ if ( $registrationAuthority ) {
 
 #print "Walking through the tree...\n";
 my %elements; 
+my %sizes;
 foreach (@nodes) { 
 	processNode( $_ );
 }
-foreach (sort keys %elements) {
-	print "$_ $elements{$_}\n";
+if ( $size ) {
+	foreach (sort keys %elements) {
+		print "$_ $elements{$_} $sizes{$_}\n";
+	}
+} else {
+       foreach (sort keys %elements) {
+                print "$_ $elements{$_}\n";
+        }
 }
 
 sub processNode {
@@ -108,6 +121,7 @@ sub processNode {
 	$nodeNS = '{' . $node->namespaceURI . '}' . $node->localname;
 	#print "$nodeNS\n";
         ++$elements{ $nodeNS };
+	$sizes{ $nodeNS } += length($node->textContent);
 	#print $node->nodePath() . "\n";
 	if ( ! $node->hasChildNodes ) { return; }
 	foreach $child ($node->childNodes) {
